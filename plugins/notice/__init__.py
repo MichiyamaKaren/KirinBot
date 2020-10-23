@@ -7,7 +7,7 @@ __plugin_name__ = '自动提醒'
 __plugin_usage__ = r'''自动提醒
 notice/提醒 时间（格式为：年-月-日 时:分）\n提醒内容，两者用回车分隔'''
 
-#register_all_valid_notices(NOTICE_FILE_PATH,scheduler)
+register_all_valid_notices(NOTICE_FILE_PATH,scheduler)
 
 
 @on_command('notice', aliases=('提醒',))
