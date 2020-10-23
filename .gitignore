@@ -1,0 +1,19 @@
+# program/config data
+*.pkl
+*.json
+
+# nonebot config
+config.py
+
+# PyCharm
+.idea/
+*.xml
+
+# python
+__pycache__/
+*.pyc
+*.egg
+*.egg-info
+
+# test
+*/test.py
