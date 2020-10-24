@@ -2,6 +2,7 @@ import pickle
 import nonebot
 from nonebot import Scheduler, NoneBot
 from datetime import datetime
+
 from typing import Dict
 from nonebot.typing import Context_T
 
@@ -10,7 +11,7 @@ NOTICE_FILE_PATH = 'plugins/notice/notices.pkl'
 
 def notice_job_func(bot: NoneBot, action: str, params: Dict):
     async def job_func():
-        bot.call_action(action, **params)
+        await bot.call_action(action, **params)
 
     return job_func
 
