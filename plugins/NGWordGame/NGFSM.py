@@ -41,9 +41,9 @@ class NGFSM:
                 self.playerlist.append(Player(sender))
                 self.reply = [self.ReplyMsg(msg='成功注册', at_sender=True)]
             elif text == 'stop signing' and sender['isSU']:
-                self.reply = [self.ReplyMsg('玩家注册阶段结束，已注册的玩家有：\n' + self.playerlist.PrintPlayers()),
+                self.reply = [self.ReplyMsg('玩家注册阶段结束，已注册的玩家有：\n' + self.playerlist.printPlayers()),
                               self.ReplyMsg('开始私聊设置NG词')]
-                self.private = [self.PrivateMsg(user_id=pid, msg=msg) for pid, msg in self.playerlist.SetPrompt()]
+                self.private = [self.PrivateMsg(user_id=pid, msg=msg) for pid, msg in self.playerlist.setPrompt()]
                 self.playerlist.canset = True
                 storePlayer(self.playerlist, DATA_PATH)
                 self.state = states.settingNG
