@@ -1,54 +1,58 @@
-import pickle
 import nonebot
-from nonebot import Scheduler, NoneBot
+import pickle
 from datetime import datetime
 
-from typing import Dict
+from typing import Dict, Optional
 from nonebot.typing import Context_T
+from nonebot.sched import Scheduler
 
 NOTICE_FILE_PATH = 'plugins/notice/notices.pkl'
 
 
-def notice_job_func(bot: NoneBot, action: str, params: Dict):
-    async def job_func():
-        await bot.call_action(action, **params)
-
-    return job_func
-
-
 class Notice:
-    def __init__(self, time: datetime, message: str, ctx: Context_T):
+    def __init__(self, time: datetime, job_id: Optional[str] = None):
         self.time: datetime = time
-        self.job_id = None
+        self.job_id = job_id
 
-        message = '[CQ:at,qq={:d}]'.format(ctx['user_id']) + message
+    def set_action_from_nonebot_ctx(self, message: str, ctx: Context_T):
         if ctx['message_type'] == 'private':
-            self.action = 'send_private_msg'
-            self.params = dict(user_id=ctx['user_id'], message=message, self_id=ctx['self_id'])
+            action = 'send_private_msg'
+            params = dict(user_id=ctx['user_id'], message=message, self_id=ctx['self_id'])
         elif ctx['message_type'] == 'group':
-            self.action = 'send_group_msg'
-            self.params = dict(group_id=ctx['group_id'], message=message, self_id=ctx['self_id'])
-        elif ctx['message_type'] == 'discuss':
-            self.action = 'send_discuss_msg'
-            self.params = dict(discuss_id=ctx['discuss_id'], message=message, self_id=ctx['self_id'])
+            action = 'send_group_msg'
+            params = dict(group_id=ctx['group_id'], message=message, self_id=ctx['self_id'])
+        self.set_action(action=action, params=params)
+
+    def set_action(self, action: str, params: Dict):
+        self.action = action
+        self.params = params
 
     @property
     def valid(self) -> bool:
         return self.time > datetime.now()
 
+    def _data_dict(self):
+        save_attrs = ['time', 'action', 'params']
+        return {attr: self.__getattribute__(attr) for attr in save_attrs}
+
     def store(self, filename: str, remove_self=False):
         notices = load_notices(filename)
         if remove_self:
-            notices.pop(self.job_id)
+            if self.job_id in notices:
+                notices.pop(self.job_id)
         else:
             notices[self.job_id] = self
-        valid_notices = {job_id: notice for job_id, notice in notices.items() if notice.valid}
+        valid_notices_data = {job_id: notice._data_dict() for job_id, notice in notices.items() if notice.valid}
         with open(filename, 'wb') as f:
-            pickle.dump(valid_notices, f)
+            pickle.dump(valid_notices_data, f)
 
     def register(self, scheduler: Scheduler):
-        notice_func = notice_job_func(nonebot.get_bot(), self.action, self.params)
-        job = scheduler.add_job(notice_func, id=self.job_id, trigger='date', run_date=self.time)
+        bot = nonebot.get_bot()
+
+        async def job_func():
+            await bot.call_action(self.action, **self.params)
+
+        job = scheduler.add_job(job_func, id=self.job_id, trigger='date', run_date=self.time)
         self.job_id = job.id
 
     def reschedule(self, scheduler: Scheduler, time: datetime):
@@ -64,10 +68,17 @@ class Notice:
 def load_notices(filename: str) -> Dict[str, Notice]:
     try:
         with open(filename, 'rb') as f:
-            notices: Dict[str, Notice] = pickle.load(f)
-        return {job_id: notice for job_id, notice in notices.items() if notice.valid}
-    except (FileNotFoundError,EOFError):
+            notices_data: Dict[str, Dict] = pickle.load(f)
+    except (FileNotFoundError, EOFError):
         return {}
+
+    notices = {}
+    for job_id, data in notices_data.items():
+        notice = Notice(time=data['time'], job_id=job_id)
+        if notice.valid:
+            notice.set_action(action=data['action'], params=data['params'])
+            notices[notice.job_id] = notice
+    return notices
 
 
 def register_all_valid_notices(filename, scheduler):
