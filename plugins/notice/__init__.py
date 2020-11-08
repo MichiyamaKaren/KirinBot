@@ -21,7 +21,7 @@ async def noticing(session: CommandSession):
 
 @noticing.args_parser
 async def _(session: CommandSession):
-    arglist = session.current_arg_text.split('\n')
+    arglist = session.current_arg_text.replace('\r', '\n').split('\n')
     if len(arglist) < 2:
         session.finish('格式错误！')
     else:
