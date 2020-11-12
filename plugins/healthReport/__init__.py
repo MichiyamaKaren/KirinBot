@@ -1,6 +1,6 @@
 import nonebot
 from nonebot import on_command, CommandSession
-from .report import healthReport
+from .report import healthReport, healthReportWeekly
 
 __plugin_name__ = 'healthReport'
 __plugin_usage__ = '''停止：pauseHR\n继续：resumeHR

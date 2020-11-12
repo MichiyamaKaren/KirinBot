@@ -77,7 +77,7 @@ async def weekly_report(session, token):
     return session.post(r'https://weixine.ustc.edu.cn/2020/apply/daliy/post', data=form_data, headers=header)
 
 
-@nonebot.scheduler.scheduled_job('cron', id='healthReport', hour=10)
+@nonebot.scheduler.scheduled_job('cron', id='healthReport', hour=0)
 async def healthReport():
     sleep(random() * 600)  # randomly sleep 0-10 minutes
 
@@ -94,7 +94,7 @@ async def healthReport():
         await bot.send_private_msg(user_id=report_qq, message='今日已健康打卡', self_id=config['self_id'])
 
 
-@nonebot.scheduler.scheduled_job('cron', id='healthReportWeekly', day_of_week=3)
+@nonebot.scheduler.scheduled_job('cron', id='healthReportWeekly', day_of_week=0, hour=1)
 async def healthReportWeekly():
     session = requests.session()
     with open('plugins/healthReport/config.json') as f:
@@ -103,7 +103,7 @@ async def healthReportWeekly():
 
     r = session.get('https://weixine.ustc.edu.cn/2020/apply/daliy')
     token = get_token_from_response(r)
-    await daily_report(session, token)
+    await weekly_report(session, token)
 
     report_qq = config.get('report_qq', None)
     if report_qq:
