@@ -1,7 +1,9 @@
-import json
 from nonebot import on_command, CommandSession
+
 from .baiduMapAPI import BaiduMap, BaiduAPIException
 from .seventimer import weatherAPI
+
+from .config import baiduak
 
 __plugin_name__ = '天气预报'
 __plugin_usage__ = '''使用格式：
@@ -12,9 +14,7 @@ __plugin_usage__ = '''使用格式：
 
 @on_command('weather', aliases=('天气',), only_to_me=False)
 async def weather(session: CommandSession):
-    with open('plugins/weather/config.json') as f:
-        ak = json.load(f)['ak']
-    baidumap = BaiduMap(ak=ak)
+    baidumap = BaiduMap(ak=baiduak)
     try:
         if session.state['type'] == 'geocoding':
             lat, lng, p = baidumap.coordinate(session.state['addr'])

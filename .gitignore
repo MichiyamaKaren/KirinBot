@@ -2,7 +2,8 @@
 *.pkl
 *.json
 
-# nonebot config
+# config files
+config/
 config.py
 
 # PyCharm
@@ -16,4 +17,4 @@ __pycache__/
 *.egg-info
 
 # test
-*/test.py
+test.py

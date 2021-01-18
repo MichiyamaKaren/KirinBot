@@ -1,13 +1,14 @@
 import nonebot
 
-import json
 import requests
 from bs4 import BeautifulSoup
 
-from datetime import datetime, timedelta
-
 from time import sleep
 from random import random
+from datetime import datetime, timedelta
+
+from .config import username, password, report_qq, province_code, city_code, is_inschool
+from config import self_id
 
 
 def get_token_from_response(response: requests.Response):
@@ -25,13 +26,11 @@ async def login(session, username, password):
 async def daily_report(session, token):
     form_data = dict(
         _token=token,
-        now_address=1, gps_now_address='', now_province=340000, gps_province='', now_city=340100, gps_city='',
-        now_detail='', is_inschool=4, body_condition=1, body_condition_detail='', now_status=2, now_status_detail='',
+        now_address=1, gps_now_address='', now_province=province_code, gps_province='', now_city=city_code, gps_city='',
+        now_detail='', is_inschool=is_inschool, body_condition=1, body_condition_detail='', now_status=2, now_status_detail='',
         has_fever=0,
         last_touch_sars=0, last_touch_sars_date='', last_touch_sars_detail='',
-        last_touch_hubei=0, last_touch_hubei_date='', last_touch_hubei_detail='',
-        last_cross_hubei=0, last_cross_hubei_date='', last_cross_hubei_detail='',
-        return_dest=1, return_dest_detail='', other_detail=''
+        other_detail=''
     )
     header = {
         'user-agent': r'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36',
@@ -82,30 +81,24 @@ async def healthReport():
     sleep(random() * 600)  # randomly sleep 0-10 minutes
 
     session = requests.session()
-    with open('plugins/healthReport/config.json') as f:
-        config = json.load(f)
-    r = await login(session, config['username'], config['password'])
+    r = await login(session, username, password)
     token = get_token_from_response(r)
     await daily_report(session, token)
 
-    report_qq = config.get('report_qq', None)
     if report_qq:
         bot = nonebot.get_bot()
-        await bot.send_private_msg(user_id=report_qq, message='今日已健康打卡', self_id=config['self_id'])
+        await bot.send_private_msg(user_id=report_qq, message='今日已健康打卡', self_id=self_id)
 
 
 @nonebot.scheduler.scheduled_job('cron', id='healthReportWeekly', day_of_week=0, hour=1)
 async def healthReportWeekly():
     session = requests.session()
-    with open('plugins/healthReport/config.json') as f:
-        config = json.load(f)
-    await login(session, config['username'], config['password'])
+    await login(session, username, password)
 
     r = session.get('https://weixine.ustc.edu.cn/2020/apply/daliy')
     token = get_token_from_response(r)
     await weekly_report(session, token)
 
-    report_qq = config.get('report_qq', None)
     if report_qq:
         bot = nonebot.get_bot()
-        await bot.send_private_msg(user_id=report_qq, message='已报备', self_id=config['self_id'])
+        await bot.send_private_msg(user_id=report_qq, message='已报备', self_id=self_id)
