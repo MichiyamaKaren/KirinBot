@@ -19,7 +19,8 @@ def get_token_from_response(response: requests.Response):
 async def login(session, username, password):
     loginurl = r'https://passport.ustc.edu.cn/login?service=https%3A%2F%2Fweixine.ustc.edu.cn%2F2020%2Fcaslogin'
     formdata = {'model': 'uplogin.jsp', 'service': r'https://weixine.ustc.edu.cn/2020/caslogin',
-                'username': username, 'password': password}
+                'username': username, 'password': password, 
+                'warn': '', 'showCode': '', 'button': ''}
     return session.post(loginurl, data=formdata)
 
 
@@ -95,7 +96,7 @@ async def healthReportWeekly():
     session = requests.session()
     await login(session, username, password)
 
-    r = session.get('https://weixine.ustc.edu.cn/2020/apply/daliy')
+    r = session.get('https://weixine.ustc.edu.cn/2020/')
     token = get_token_from_response(r)
     await weekly_report(session, token)
 
